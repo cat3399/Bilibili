@@ -33,6 +33,7 @@ class SettingsViewModel @Inject constructor(
         false,
         playerViewShowMiniProgressBar = false,
         directPlay = false,
+        tryLook = false,
         danmakuVersion = 1
     )
 ) {
@@ -55,6 +56,7 @@ class SettingsViewModel @Inject constructor(
             cacheSize = context.cacheSize(),
             playerViewShowMiniProgressBar = bilibiliStorage.playerViewShowMiniProgressBar,
             directPlay = bilibiliStorage.directPlay,
+            tryLook = bilibiliStorage.tryLook,
             danmakuVersion = bilibiliStorage.danmakuVersion
         )
     }
@@ -141,6 +143,10 @@ class SettingsViewModel @Inject constructor(
             is SettingsAction.SetDanmakuVersion -> {
                 bilibiliStorage.danmakuVersion = action.value
             }
+
+            is SettingsAction.SetTryLook -> {
+                bilibiliStorage.tryLook = action.value
+            }
         }
 
         refresh()
@@ -185,6 +191,7 @@ data class SettingsState(
     val cacheSize: String = "0MB",
     val playerViewShowMiniProgressBar: Boolean,
     val directPlay: Boolean,
+    val tryLook: Boolean,
     val danmakuVersion: Int,
 
     )
@@ -217,6 +224,8 @@ sealed interface SettingsAction {
     data class SetDirectPlay(val value: Boolean) : SettingsAction
 
     data class SetDanmakuVersion(val value: Int) : SettingsAction
+
+    data class SetTryLook(val value: Boolean) : SettingsAction
 }
 
 sealed interface SettingsEvent {

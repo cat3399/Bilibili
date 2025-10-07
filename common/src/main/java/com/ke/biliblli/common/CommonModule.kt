@@ -33,13 +33,16 @@ import javax.inject.Singleton
 
 class KePersistentCookieJar(
     cache: CookieCache,
-    persistor: CookiePersistor
+    persistor: CookiePersistor,
+    private val bilibiliStorage: BilibiliStorage
 ) : PersistentCookieJar(cache, persistor) {
 
 
     override fun loadForRequest(url: HttpUrl): List<Cookie> {
-        val list = super.loadForRequest(url)
-        return list
+        if (bilibiliStorage.tryLook && url.encodedPath == "/x/player/wbi/playurl") {
+            return emptyList()
+        }
+        return super.loadForRequest(url)
     }
 
     override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) {
@@ -66,10 +69,17 @@ object CommonModule {
 
     @Provides
     @Singleton
-    fun provideCookieJar(@ApplicationContext context: Context): KePersistentCookieJar {
+    fun provideCookieJar(
+        @ApplicationContext context: Context,
+        bilibiliStorage: BilibiliStorage
+    ): KePersistentCookieJar {
 
 
-        return KePersistentCookieJar(SetCookieCache(), SharedPrefsCookiePersistor(context))
+        return KePersistentCookieJar(
+            SetCookieCache(),
+            SharedPrefsCookiePersistor(context),
+            bilibiliStorage
+        )
     }
 
 

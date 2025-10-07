@@ -37,6 +37,11 @@ interface BilibiliStorage {
      */
     var directPlay: Boolean
 
+    /**
+     * 是否开启试看
+     */
+    var tryLook: Boolean
+
 
     var playerViewShowMiniProgressBar: Boolean
 

@@ -89,6 +89,8 @@ fun SettingsRoute(navigate: (Any) -> Unit) {
     }, {
         viewModel.handleAction(SettingsAction.SetDirectPlay(it))
     }, {
+        viewModel.handleAction(SettingsAction.SetTryLook(it))
+    }, {
         viewModel.handleAction(SettingsAction.SetDanmakuVersion(it))
     })
 
@@ -121,6 +123,7 @@ private fun SettingsScreen(
     clearCache: () -> Unit,
     setPlayerViewShowMiniProgressBar: (Boolean) -> Unit,
     setDirectPlay: (Boolean) -> Unit,
+    setTryLook: (Boolean) -> Unit,
     setDanmakuVersion: (Int) -> Unit
 ) {
 
@@ -216,6 +219,24 @@ private fun SettingsScreen(
                 Text("点击视频封面直接播放", style = titleTextStyle.copy(color = Color.Unspecified))
             }, trailingContent = {
                 Switch(checked = state.directPlay, onCheckedChange = {
+
+                })
+            })
+
+        }
+
+
+        item {
+
+
+            ListItem(selected = false, onClick = {
+                setTryLook(!state.tryLook)
+            }, modifier = columnModifier, headlineContent = {
+                Text("启动试看", style = titleTextStyle.copy(color = Color.Unspecified))
+            }, supportingContent = {
+                Text("启用该配置后,最高画质仅支持1080p,但是较为稳定")
+            }, trailingContent = {
+                Switch(checked = state.tryLook, onCheckedChange = {
 
                 })
             })

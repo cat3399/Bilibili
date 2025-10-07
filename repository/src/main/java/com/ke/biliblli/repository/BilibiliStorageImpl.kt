@@ -44,6 +44,14 @@ class BilibiliStorageImpl @Inject constructor(
             }
         }
 
+    override var tryLook: Boolean
+        get() = sharedPreferences.getBoolean("tryLook", false)
+        set(value) {
+            sharedPreferences.edit(commit = true) {
+                putBoolean("tryLook", value)
+            }
+        }
+
     override var playerViewShowMiniProgressBar: Boolean
         get() = sharedPreferences.getBoolean("playerViewShowMiniProgressBar", true)
         set(value) {

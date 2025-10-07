@@ -7,6 +7,7 @@ import com.ke.biliblli.api.response.DynamicResponse
 import com.ke.biliblli.api.response.DynamicUpListResponse
 import com.ke.biliblli.api.response.EmptyJson
 import com.ke.biliblli.api.response.FavResourceListResponse
+import com.ke.biliblli.api.response.FingerSpiResponse
 import com.ke.biliblli.api.response.HistoryResponse
 import com.ke.biliblli.api.response.HomeRecommendListResponse
 import com.ke.biliblli.api.response.LaterWatchResponse
@@ -65,6 +66,7 @@ interface BilibiliApi {
         @Query("voice_balance") voiceBalance: Int = 1,
         @Query("gaia_source") gaiaSource: String = "pre-load",
         @Query("web_location") webLocation: Int = 1550101,
+        @Query("try_look") tryLook: Int? = null,
         @Query("wts") wts: Long,
         @Query("w_rid") sign: String
     ): BaseResponse<VideoUrlResponse>
@@ -74,6 +76,9 @@ interface BilibiliApi {
      */
     @GET("x/web-interface/nav")
     suspend fun loginInfo(): BaseResponse<LoginInfoResponse>
+
+    @GET("x/frontend/finger/spi")
+    suspend fun fingerSpi(): BaseResponse<FingerSpiResponse>
 
     /**
      * 获取扫码地址

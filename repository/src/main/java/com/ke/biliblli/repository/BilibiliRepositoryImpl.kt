@@ -33,6 +33,8 @@ import com.ke.biliblli.common.entity.WbiParams
 import com.ke.biliblli.common.http.BilibiliProtoApi
 import com.ke.biliblli.db.dao.SearchHistoryDao
 import com.ke.biliblli.db.entity.SearchHistoryEntity
+import okhttp3.Cookie
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.net.URLEncoder
@@ -40,6 +42,7 @@ import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
 import java.util.TreeMap
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -225,41 +228,34 @@ class BilibiliRepositoryImpl @Inject constructor(
 
     override suspend fun initBuvid() {
         bilibiliHtmlApi.mainPage()
-//        val html = bilibiliHtmlApi.dynamic()
-//
-////        val spmPrefixExp = """your_regex_pattern_here""" // Replace with actual regex
-//        val spmPrefixMatch = pattern.find(html) ?: throw Exception("No match found")
-//        val spmPrefix = spmPrefixMatch.groupValues[1]
-//
-//        val rand = Random(seed = 256)
-//
-//// Generate the byte array components
-//        val part1 = ByteArray(32) { rand.nextInt(256).toByte() }
-//        val part2 = byteArrayOf(0, 0, 0, 0)
-//        val part3 = byteArrayOf(73, 69, 78, 68) // "IEND" in ASCII
-//        val part4 = ByteArray(4) { rand.nextInt(256).toByte() }
-//
-//// Combine all byte arrays
-//        val combined = part1 + part2 + part3 + part4
-//
-//        val randPngEnd = Base64.encodeToString(combined, Base64.NO_WRAP)
-//
-//// Build JSON data
-//        val jsonData = JSONObject().apply {
-//            put("3064", 1)
-//            put("39c8", "$spmPrefix.fp.risk")
-//            put("3c43", JSONObject().apply {
-//                put("adca", "Linux")
-//                put("bfe9", randPngEnd.takeLast(50))
-//            })
-//        }.toString()
-//
-//        bilibiliApi.activeBuvid(Payload(jsonData))
-//        userRelationStatus(33882856)
-//
-//        val response = userInfo(33882856)
-//
-//        response.data
+        ensureBuvid3Cookie()
+    }
+
+    private suspend fun ensureBuvid3Cookie() {
+        val requestUrl = BilibiliApi.baseUrl.toHttpUrl()
+        val hasBuvid3 = kePersistentCookieJar.loadForRequest(requestUrl)
+            .any { it.name == "buvid3" && it.value.isNotEmpty() }
+        if (hasBuvid3) {
+            return
+        }
+        try {
+            val response = bilibiliApi.fingerSpi()
+            val buvid3 = response.data?.b3
+            if (!buvid3.isNullOrEmpty()) {
+                val expiresAt = System.currentTimeMillis() + TimeUnit.DAYS.toMillis(1)
+                val cookie = Cookie.Builder()
+                    .name("buvid3")
+                    .value(buvid3)
+                    .domain("bilibili.com")
+                    .path("/")
+                    .expiresAt(expiresAt)
+                    .secure()
+                    .build()
+                kePersistentCookieJar.saveFromResponse(requestUrl, listOf(cookie))
+            }
+        } catch (e: Exception) {
+            CrashHandler.handler(e)
+        }
     }
 
     private fun genAuroraEid(uid: Long): String? {
@@ -353,6 +349,7 @@ class BilibiliRepositoryImpl @Inject constructor(
         val fnval = 4048
 //            0b111111010000
         val qn = 126
+        val tryLookEnabled = bilibiliStorage.tryLook
 
         val now = System.currentTimeMillis() / 1000
         val treeMap = TreeMap<String, Any>()
@@ -366,6 +363,9 @@ class BilibiliRepositoryImpl @Inject constructor(
         treeMap.put("gaia_source", "pre-load")
         treeMap.put("web_location", "1550101")
         treeMap.put("wts", now)
+        if (tryLookEnabled) {
+            treeMap["try_look"] = 1
+        }
 
         val sign = WbiUtil.enc(treeMap, wbiParams.image, wbiParams.sub)
 
@@ -374,6 +374,7 @@ class BilibiliRepositoryImpl @Inject constructor(
             bvid = bvid,
             qn = qn,
             fnval = fnval,
+            tryLook = if (tryLookEnabled) 1 else null,
             wts = now,
             sign = sign ?: ""
         )
